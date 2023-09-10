@@ -20,27 +20,27 @@ import MailConfig from './config/mail.config';
       isGlobal: true,
       load: [AppConfig, DatabaseConfig, AuthConfig, MailConfig],
     }),
-    // MongooseModule.forRootAsync({
-    //   inject: [ConfigService],
-    //   useFactory: async (configService: ConfigService<AllConfigType>) => {
-    //     const databaseUrl = configService.get('database.databaseUrl', {
-    //       infer: true,
-    //     });
-    //     const mongooseOptions = {
-    //       uri: databaseUrl,
-    //       connectionFactory: (connection) => {
-    //         connection.plugin(transformToJSONWithId);
-    //         return connection;
-    //       },
-    //     };
-    //     return mongooseOptions;
-    //   },
-    // }),
-    // SessionModule,
-    // AuthModule,
-    // UsersModule,
-    // MailerModule,
-    // MailModule,
+    MongooseModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService<AllConfigType>) => {
+        const databaseUrl = configService.get('database.databaseUrl', {
+          infer: true,
+        });
+        const mongooseOptions = {
+          uri: databaseUrl,
+          connectionFactory: (connection) => {
+            connection.plugin(transformToJSONWithId);
+            return connection;
+          },
+        };
+        return mongooseOptions;
+      },
+    }),
+    SessionModule,
+    AuthModule,
+    UsersModule,
+    MailerModule,
+    MailModule,
   ],
   providers: [
     {
