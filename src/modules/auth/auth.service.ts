@@ -343,9 +343,10 @@ export class AuthService {
     const maxAgeInMilliseconds = Number(ms(maxAge));
     res.cookie(cookieName, cookieValue, {
       httpOnly: true,
-      sameSite: 'lax',
+      sameSite: 'strict',
       maxAge: maxAgeInMilliseconds,
       domain: '.onrender.com',
+      path: '/',
     });
   }
 }
