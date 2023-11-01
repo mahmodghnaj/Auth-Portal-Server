@@ -10,6 +10,8 @@ export class Session {
   user: Users;
   @Prop({ type: Date, default: null })
   deletedAt: Date;
+  @Prop()
+  token: string;
 }
 
 export const SessionSchema = SchemaFactory.createForClass(Session);

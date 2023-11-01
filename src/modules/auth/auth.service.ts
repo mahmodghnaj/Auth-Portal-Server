@@ -2,6 +2,7 @@ import {
   HttpException,
   Injectable,
   InternalServerErrorException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { AuthEmailLoginDto } from './dto/auth-login.dto';
@@ -9,7 +10,7 @@ import { AuthRegisterDto } from './dto/auth-register.dto';
 import bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { LoginResponseType } from './types/login-response.type';
+import { InfoSession, LoginResponseType } from './types/login-response.type';
 import { Request, Response } from 'express';
 import { StatusEnum, UsersDocument } from '../users/schemas/users.schema';
 import {
@@ -23,6 +24,7 @@ import crypto from 'crypto';
 import { uid } from 'uid';
 import { ForgotService } from '../forgot/forgot.service';
 import { MailService } from '../mail/Mail.service';
+import { SessionDocument } from '../session/schemas/session.schema';
 
 @Injectable()
 export class AuthService {
@@ -231,7 +233,6 @@ export class AuthService {
       },
       oldRefreshTokenArray,
     );
-
     return {
       token,
       refreshToken,
@@ -276,6 +277,18 @@ export class AuthService {
       tokenExpires,
     };
   }
+  async infoSession(
+    payload: JwtPayloadTypeWithRefreshToken,
+  ): Promise<InfoSession> {
+    const foundToken = await this.usersService.findOne({
+      refreshToken: payload.refreshToken,
+    });
+    if (!foundToken) throw new UnauthorizedException();
+    const { token, user } = await this.sessionService.infoSession({
+      _id: payload.sessionId,
+    });
+    return { token, user };
+  }
   async me(
     userJwtPayload: JwtPayloadType,
   ): Promise<NullableType<UsersDocument>> {
@@ -314,6 +327,7 @@ export class AuthService {
     await this.usersService.update(data.id, {
       refreshToken: newRefreshTokenArray,
     });
+    await this.sessionService.update(data.sessionId, { token });
     return {
       token,
       refreshToken,

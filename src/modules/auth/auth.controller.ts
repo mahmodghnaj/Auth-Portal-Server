@@ -117,6 +117,16 @@ export class AuthController {
     );
     return res;
   }
+
+  @Public()
+  @UseGuards(AuthGuard('jwt-refresh'))
+  @Post('info-session')
+  @HttpCode(HttpStatus.OK)
+  async infoSession(@Request() req) {
+    const res = await this.authService.infoSession(req.user);
+    return res;
+  }
+
   @Get('me')
   @HttpCode(HttpStatus.OK)
   async me(@Request() request): Promise<NullableType<UsersDocument>> {

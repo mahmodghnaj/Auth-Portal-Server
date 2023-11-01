@@ -23,8 +23,8 @@ async function bootstrap() {
   );
 
   app.enableCors({
+    origin: configService.getOrThrow('app.frontendDomain', { infer: true }),
     credentials: true,
-    // origin: process.env.FRONTEND_URL,
   });
 
   await app.listen(configService.getOrThrow('app.port', { infer: true }));
