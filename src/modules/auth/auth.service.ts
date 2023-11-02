@@ -345,6 +345,7 @@ export class AuthService {
       httpOnly: true,
       sameSite: 'lax',
       maxAge: maxAgeInMilliseconds,
+      domain: 'auth-portal.onrender.com',
     });
   }
 }
