@@ -343,7 +343,7 @@ export class AuthService {
     const maxAgeInMilliseconds = Number(ms(maxAge));
     res.cookie(cookieName, cookieValue, {
       httpOnly: true,
-      sameSite: 'none',
+      sameSite: 'lax',
       maxAge: maxAgeInMilliseconds,
     });
   }
