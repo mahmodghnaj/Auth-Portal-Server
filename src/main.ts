@@ -23,7 +23,10 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    origin: configService.getOrThrow('app.frontendDomain', { infer: true }),
+    origin: [
+      configService.getOrThrow('app.frontendDomain', { infer: true }),
+      'http://localhost:3000',
+    ], // Add your local development URL here
     credentials: true,
   });
 
