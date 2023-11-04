@@ -19,7 +19,13 @@ export class JwtRefreshStrategy extends PassportStrategy(
       jwtFromRequest: (req: Request) => {
         if (req.headers['user-agent']) {
           // Request comes from web
-          return req.cookies['refreshToken']; // Extract from cookie
+          // If the front-end and back-end are on the same domain,
+          // there's no need to store the refresh token in cookies,
+          // as the back-end will send the refresh token in a cookie.
+          // This function is used for different domain scenarios
+
+          return req.headers['refresh']; // where domain front same back please replace to  return req.cookies['refreshToken'];
+          // return req.cookies['refreshToken']; // Extract from cookie
         } else {
           // Request comes from mobile or any other source
           return ExtractJwt.fromAuthHeaderAsBearerToken()(req); // Extract from request headers
@@ -40,9 +46,10 @@ export class JwtRefreshStrategy extends PassportStrategy(
 
     return payload;
   }
-  private getRefreshToken(req: Request): string {
+  private getRefreshToken(req: Request): string | null | any {
     if (req.headers['user-agent']) {
-      return req.cookies['refreshToken'];
+      return req?.headers?.['refresh'] ?? null;
+      // return req.cookies['refreshToken'];
     } else {
       return ExtractJwt.fromAuthHeaderAsBearerToken()(req);
     }
