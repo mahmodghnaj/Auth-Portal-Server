@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Req,
   Request,
   Res,
   UseGuards,
@@ -22,12 +23,14 @@ import { AuthEmailLoginDto } from './dto/auth-login.dto';
 import { AuthConfirmEmailDto } from './dto/auth-confirm-email.dto';
 import { AuthForgotPasswordDto } from './dto/auth-forgot-password.dto';
 import { AuthResetPasswordDto } from './dto/auth-reset-password.dto';
+import { AllConfigType } from 'src/config/config.type';
+import ms from 'ms';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private authService: AuthService,
-    private configService: ConfigService,
+    private configService: ConfigService<AllConfigType>,
   ) {}
 
   @Public()
@@ -43,7 +46,9 @@ export class AuthController {
       response,
       'refreshToken',
       res.refreshToken,
-      this.configService.getOrThrow('auth.refreshExpires'),
+      this.configService.getOrThrow('auth.refreshExpires', {
+        infer: true,
+      }),
     );
 
     return res;
@@ -94,7 +99,9 @@ export class AuthController {
       response,
       'refreshToken',
       res.refreshToken,
-      this.configService.getOrThrow('auth.refreshExpires'),
+      this.configService.getOrThrow('auth.refreshExpires', {
+        infer: true,
+      }),
     );
 
     return res;
@@ -113,7 +120,9 @@ export class AuthController {
       response,
       'refreshToken',
       res.refreshToken,
-      this.configService.getOrThrow('auth.refreshExpires'),
+      this.configService.getOrThrow('auth.refreshExpires', {
+        infer: true,
+      }),
     );
     return res;
   }
@@ -141,5 +150,45 @@ export class AuthController {
   ): Promise<void> {
     await this.authService.logout(request.user);
     response.clearCookie('refreshToken');
+  }
+
+  ///social media
+
+  // 1-github
+  @Public()
+  @Get('github')
+  @UseGuards(AuthGuard('github'))
+  githubLogin() {}
+  ///callback github
+  @Public()
+  @Get('github/callback')
+  @UseGuards(AuthGuard('github'))
+  async githubLoginCallback(@Req() req, @Res() res) {
+    const redirectUrl = this.generateRedirectUrl(req.user);
+    return res.redirect(redirectUrl);
+  }
+  // 2-google
+  @Public()
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  googleLogin() {}
+
+  ///callback google
+  @Public()
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleLoginCallback(@Req() req, @Res() res) {
+    const redirectUrl = this.generateRedirectUrl(req.user);
+    return res.redirect(redirectUrl);
+  }
+
+  private generateRedirectUrl(user: any): string {
+    const frontendDomain = this.configService.get('app.frontendDomain', {
+      infer: true,
+    });
+    const refreshExpires = Number(
+      ms(this.configService.getOrThrow('auth.refreshExpires', { infer: true })),
+    );
+    return `${frontendDomain}/auth/social?token=${user.token}&refreshToken=${user.refreshToken}&expiresIn=${refreshExpires}`;
   }
 }

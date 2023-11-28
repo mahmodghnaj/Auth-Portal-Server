@@ -1,7 +1,7 @@
 export type AppConfig = {
   nodeEnv: string;
   name: string;
-  frontendDomain?: string;
+  frontendDomain: string;
   backendDomain: string;
   port: number;
   workingDirectory: string;
@@ -27,6 +27,14 @@ export type MailConfig = {
   defaultEmail?: string;
   defaultName?: string;
 };
+export interface SocialConfig {
+  clientId: string;
+  clientSecret: string;
+  callbackURL: string;
+}
+export type GoogleConfig = SocialConfig;
+
+export type GithubConfig = SocialConfig;
 
 //all
 export type AllConfigType = {
@@ -34,4 +42,6 @@ export type AllConfigType = {
   database: DatabaseConfig;
   auth: AuthConfig;
   mail: MailConfig;
+  googleConfig: GoogleConfig;
+  githubConfig: GithubConfig;
 };

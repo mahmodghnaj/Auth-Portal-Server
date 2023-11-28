@@ -168,8 +168,6 @@ export class AuthService {
     dtoLogin: AuthEmailLoginDto,
     req: Request,
   ): Promise<LoginResponseType> {
-    const cookies = req.cookies;
-
     const user = await this.usersService.validateUser({
       email: dtoLogin.email,
     });
@@ -183,61 +181,16 @@ export class AuthService {
       throw new HttpException('email or password is incorrect ', 400);
     }
 
-    let oldRefreshTokenArray = cookies?.refreshToken
-      ? user.refreshToken.filter((rt) => rt !== cookies.refreshToken)
-      : user.refreshToken;
+    const { sessionId, oldRefreshTokenArray } =
+      await this.handleRefreshTokenAndSession(req, user);
 
-    let sessionId = null;
-
-    if (cookies?.refreshToken) {
-      /* 
-                 Scenario added here: 
-                1) User logs in but never uses RT and does not logout 
-                2) RT is stolen
-                3) If 1 & 2, reuse detection is needed to clear all RTs when user logs in
-       */
-      const refreshToken = cookies.refreshToken;
-      const foundToken = await this.usersService.findOne({ refreshToken });
-
-      // Detected refresh token reuse!
-      if (!foundToken) {
-        // clear out ALL previous refresh tokens
-        oldRefreshTokenArray = [];
-        const session = await this.sessionService.create({
-          user: user.id,
-        });
-        sessionId = session.id;
-      } else if (user.refreshToken.includes(refreshToken)) {
-        try {
-          const info = await this.jwtService.verify(refreshToken, {
-            secret: this.configService.get('auth.refreshSecret'),
-          });
-          sessionId = info.sessionId;
-        } catch (error) {
-          sessionId = null;
-        }
-      }
-    }
-
-    if (!sessionId) {
-      const session = await this.sessionService.create({
-        user: user.id,
-      });
-      sessionId = session.id;
-    }
-
-    const { token, refreshToken, tokenExpires } = await this.getTokensData(
+    return await this.getTokensData(
       {
         id: user.id,
         sessionId: sessionId,
       },
       oldRefreshTokenArray,
     );
-    return {
-      token,
-      refreshToken,
-      tokenExpires,
-    };
   }
 
   async refreshToken(
@@ -299,6 +252,48 @@ export class AuthService {
   async logout(data: JwtPayloadType) {
     return await this.sessionService.softDelete(data.sessionId);
   }
+  async validateSocialLogin(
+    profile: any,
+    socialType: string,
+    request: Request,
+  ): Promise<LoginResponseType> {
+    const { id, login, email, sub, name, family_name } = profile._json; // all info returned from Social Login
+    let user = await this.usersService.validateUser({
+      socialId: id || sub,
+      socialType: socialType,
+    });
+
+    if (!user) {
+      user = await this.usersService.validateUser({
+        email: email,
+      });
+      if (user) {
+        await this.usersService.update(user.id, {
+          socialId: id || sub,
+          socialType: socialType,
+        });
+      } else {
+        user = await this.usersService.createUser({
+          socialId: id || sub,
+          socialType: socialType,
+          firstName: login || name,
+          lastName: family_name,
+          email: email,
+          password: '',
+          status: StatusEnum.active,
+        });
+      }
+    }
+    const { sessionId, oldRefreshTokenArray } =
+      await this.handleRefreshTokenAndSession(request, user);
+    return await this.getTokensData(
+      {
+        id: user.id,
+        sessionId: sessionId,
+      },
+      oldRefreshTokenArray,
+    );
+  }
   private async getTokensData(
     data: JwtPayloadType,
     oldRefreshTokenArray: string[] = [],
@@ -334,6 +329,57 @@ export class AuthService {
       tokenExpires,
     };
   }
+
+  private async handleRefreshTokenAndSession(
+    req: Request,
+    user: UsersDocument,
+  ): Promise<{ sessionId; oldRefreshTokenArray }> {
+    const cookies = req.cookies;
+    let oldRefreshTokenArray = cookies?.refreshToken
+      ? user.refreshToken.filter((rt) => rt !== cookies.refreshToken)
+      : user.refreshToken;
+
+    let sessionId = null;
+
+    if (cookies?.refreshToken) {
+      /* 
+                 Scenario added here: 
+                1) User logs in but never uses RT and does not logout 
+                2) RT is stolen
+                3) If 1 & 2, reuse detection is needed to clear all RTs when user logs in
+       */
+      const refreshToken = cookies.refreshToken;
+      const foundToken = await this.usersService.findOne({ refreshToken });
+
+      // Detected refresh token reuse!
+      if (!foundToken) {
+        // clear out ALL previous refresh tokens
+        oldRefreshTokenArray = [];
+        const session = await this.sessionService.create({
+          user: user.id,
+        });
+        sessionId = session.id;
+      } else if (user.refreshToken.includes(refreshToken)) {
+        try {
+          const info = await this.jwtService.verify(refreshToken, {
+            secret: this.configService.get('auth.refreshSecret'),
+          });
+          sessionId = info.sessionId;
+        } catch (error) {
+          sessionId = null;
+        }
+      }
+    }
+
+    if (!sessionId) {
+      const session = await this.sessionService.create({
+        user: user.id,
+      });
+      sessionId = session.id;
+    }
+    return { sessionId, oldRefreshTokenArray };
+  }
+  //
   setCookie(
     res: Response,
     cookieName: string,
@@ -345,8 +391,6 @@ export class AuthService {
       httpOnly: true,
       sameSite: 'strict',
       maxAge: maxAgeInMilliseconds,
-      
-      
     });
   }
 }

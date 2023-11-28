@@ -20,12 +20,16 @@ export class Users {
   password: string;
   @Prop({ select: false })
   refreshToken: string[];
-  @Prop({ enum: StatusEnum })
+  @Prop({ enum: StatusEnum, default: 2 })
   status: StatusEnum;
   @Prop({ select: false })
   hash: string;
   @Prop({ type: Date })
   lastPasswordChange: Date;
+  @Prop({})
+  socialId: string;
+  @Prop({})
+  socialType: string;
 }
 export const UsersSchema = SchemaFactory.createForClass(Users);
 

@@ -5,6 +5,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import AuthConfig from './config/auth.config';
 import DatabaseConfig from './config/database.config';
+import GoogleConfig from './config/google.config';
+import GithubConfig from './config/github.config';
 import AppConfig from './config/app.config';
 import { AllConfigType } from './config/config.type';
 import { APP_GUARD } from '@nestjs/core';
@@ -18,7 +20,14 @@ import MailConfig from './config/mail.config';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [AppConfig, DatabaseConfig, AuthConfig, MailConfig],
+      load: [
+        AppConfig,
+        DatabaseConfig,
+        AuthConfig,
+        MailConfig,
+        GoogleConfig,
+        GithubConfig,
+      ],
     }),
     MongooseModule.forRootAsync({
       inject: [ConfigService],

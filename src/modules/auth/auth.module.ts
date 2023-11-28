@@ -10,6 +10,8 @@ import { IsNotExist } from 'src/utils/validators/is-not-exists.validator';
 import { IsExist } from 'src/utils/validators/is-exists.validator';
 import { ForgotModule } from '../forgot/forgot.module';
 import { MailModule } from '../mail/Mail.module';
+import { GithubStrategy } from './strategies/github.strategy';
+import { GoogleStrategy } from './strategies/google.strategy';
 
 @Module({
   imports: [
@@ -27,6 +29,8 @@ import { MailModule } from '../mail/Mail.module';
     JwtService,
     JwtStrategy,
     JwtRefreshStrategy,
+    GithubStrategy,
+    GoogleStrategy,
   ],
 })
 export class AuthModule {}

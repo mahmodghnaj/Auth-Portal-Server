@@ -18,6 +18,8 @@ export class CreateUserDto {
   @IsNotEmpty()
   @MinLength(6)
   password: string;
-  status: number;
-  hash: string | null;
+  status?: number;
+  hash?: string | null;
+  socialId?: string;
+  socialType?: string;
 }
