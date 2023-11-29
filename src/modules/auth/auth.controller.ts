@@ -39,8 +39,9 @@ export class AuthController {
   async register(
     @Body() createUserDto: AuthRegisterDto,
     @Res({ passthrough: true }) response: Response,
+    @Request() req,
   ): Promise<LoginResponseType> {
-    const res = await this.authService.register(createUserDto);
+    const res = await this.authService.register(createUserDto, req);
 
     this.authService.setCookie(
       response,

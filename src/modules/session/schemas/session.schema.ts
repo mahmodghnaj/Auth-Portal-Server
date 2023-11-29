@@ -12,6 +12,8 @@ export class Session {
   deletedAt: Date;
   @Prop()
   token: string;
+  @Prop()
+  ipAddress: string;
 }
 
 export const SessionSchema = SchemaFactory.createForClass(Session);

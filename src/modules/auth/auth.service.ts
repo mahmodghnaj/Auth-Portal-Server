@@ -37,7 +37,7 @@ export class AuthService {
     private mailService: MailService,
   ) {}
 
-  async register(dto: AuthRegisterDto): Promise<LoginResponseType> {
+  async register(dto: AuthRegisterDto, req: any): Promise<LoginResponseType> {
     const hash = crypto.createHash('sha256').update(uid(21)).digest('hex');
     const user = await this.usersService.createUser({
       ...dto,
@@ -46,6 +46,7 @@ export class AuthService {
     });
     const session = await this.sessionService.create({
       user: user.id,
+      ipAddress: req.ip,
     });
     await this.mailService.userSignUp({
       to: dto.email,
@@ -357,6 +358,7 @@ export class AuthService {
         oldRefreshTokenArray = [];
         const session = await this.sessionService.create({
           user: user.id,
+          ipAddress: req.ip,
         });
         sessionId = session.id;
       } else if (user.refreshToken.includes(refreshToken)) {
@@ -374,6 +376,7 @@ export class AuthService {
     if (!sessionId) {
       const session = await this.sessionService.create({
         user: user.id,
+        ipAddress: req.ip,
       });
       sessionId = session.id;
     }
